@@ -27,6 +27,7 @@ dependencies {
 	compile('org.springframework.boot:spring-boot-starter-web')
 	compile('org.jsoup:jsoup:1.10.2')
 	compile('com.google.code.gson:gson:2.8.1')
+	compile('org.apache.commons:commons-lang3:3.6')
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 	testCompile('org.springframework.security:spring-security-test')
 }
