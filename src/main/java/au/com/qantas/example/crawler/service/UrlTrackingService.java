@@ -5,6 +5,7 @@ package au.com.qantas.example.crawler.service;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,11 +15,10 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import au.com.qantas.example.crawler.model.PageNode;
 
@@ -28,11 +28,12 @@ import au.com.qantas.example.crawler.model.PageNode;
  */
 @Service
 public class UrlTrackingService implements UrlTrackingServiceIF {
+	
+	private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 
 	private Set<PageNode> urlTree = new HashSet<>();
 	private Set<String> visitedUrls = new HashSet<>();
 	private Set<PageNode> childTree = new HashSet<>();
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -42,6 +43,8 @@ public class UrlTrackingService implements UrlTrackingServiceIF {
 	@Override
 	public Set<PageNode> buildUrlPageTree(String url, int depth) {
 		
+		LOG.debug("UrlTrackingService::buildUrlPageTree - enter");
+		clearFields();
 		PageNode pageNode = buildPageNode(url,depth);
 		Set<PageNode> pageNodes = pageNode.getNodes();
 		if(!CollectionUtils.isEmpty(pageNodes)){
@@ -50,13 +53,15 @@ public class UrlTrackingService implements UrlTrackingServiceIF {
 				PageNode childNode = buildPageNode(nodeUrl,depth);
 				childTree.add(childNode);
 			}
-		}
+		}		
 		pageNode.setNodes(childTree);
 		urlTree.add(pageNode);
+		LOG.debug("UrlTrackingService::buildUrlPageTree - exit");
 		return urlTree;
 	}
 	
 	private PageNode buildPageNode(String url, int depth){
+		LOG.debug("UrlTrackingService::buildPageNode - enter");
 		PageNode parentNode = new PageNode();
 		try {
 			
@@ -72,8 +77,8 @@ public class UrlTrackingService implements UrlTrackingServiceIF {
 				webLinks = new Elements(elementList);
 				Set<PageNode> childNodes = new HashSet<>();
 				for (Element webPage : webLinks) {
-					String absUrl = webPage.absUrl("abs:href");
-					System.out.println("webPage.attr: " + webPage.attr("abs:href"));
+					String absUrl = webPage.attr("abs:href");
+					LOG.debug("absUrl: {}", absUrl);
 					if (StringUtils.isNotBlank(absUrl) && !isUrlVisited(absUrl)) {
 						PageNode childNode = new PageNode();
 						Document childDoc = Jsoup.connect(absUrl).get();
@@ -90,10 +95,9 @@ public class UrlTrackingService implements UrlTrackingServiceIF {
 			}
 			
 		} catch (IOException ie) {
-			// TODO log error
-			ie.printStackTrace();
+			LOG.error("There was an error while parsing the URL: {}",ie);
 		}
-		
+		LOG.debug("UrlTrackingService::buildPageNode - exit");
 		return parentNode;
 	}
 
@@ -104,6 +108,20 @@ public class UrlTrackingService implements UrlTrackingServiceIF {
 		}
 
 		return false;
+	}
+	
+	private void clearFields(){
+		if(!CollectionUtils.isEmpty(this.urlTree)){
+			this.urlTree.clear();
+		}
+		
+		if(!CollectionUtils.isEmpty(this.childTree)){
+			this.childTree.clear();
+		}
+		
+		if(!CollectionUtils.isEmpty(this.visitedUrls)){
+			this.visitedUrls.clear();
+		}
 	}
 
 }
