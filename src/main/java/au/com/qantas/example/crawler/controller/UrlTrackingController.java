@@ -7,6 +7,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ public class UrlTrackingController {
 	private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
+	@Qualifier("urlTrackingService2")
 	private UrlTrackingServiceIF urlTrackingService;
 	
 	@GetMapping(value="/api/webcrawl", produces=MediaType.APPLICATION_JSON_UTF8_VALUE)
