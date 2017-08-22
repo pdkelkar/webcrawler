@@ -3,9 +3,12 @@ package au.com.qantas.example.crawler.service;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,6 +39,8 @@ public class UrlTrackingService2 implements UrlTrackingServiceIF {
   private Set<String> pagesVisited = new HashSet<String>();
   private List<String> pagesToVisit = new LinkedList<String>();
   private List<String> links = new LinkedList<String>();
+  private Map<String,PageNode> pageNodeMap = new HashMap<>();
+  private Map<String,List<String>> parentChildUrlMap = new HashMap<>();
 
   /*
    * (non-Javadoc)
@@ -56,9 +61,12 @@ public class UrlTrackingService2 implements UrlTrackingServiceIF {
         currentUrl = this.nextUrl();
       }
       PageNode node = crawl(currentUrl);
+      pageNodeMap.put(currentUrl, node);
       nodes.add(node);
       this.pagesToVisit.addAll(getLinks());
     }
+    LOG.debug("pageNodeMap: {}",pageNodeMap);
+    LOG.debug("parentChildUrlMap: {}",parentChildUrlMap);
     return nodes;
   }
 
@@ -79,14 +87,17 @@ public class UrlTrackingService2 implements UrlTrackingServiceIF {
     Elements webLinks = parentDoc.select("a[href]");
     //@formatter:off
     List<Element> elementList = webLinks.stream()
-                                        .limit(MAX_PAGES_TO_SEARCH)
+                                        .limit(MAX_PAGES_TO_SEARCH+1)
                                         .collect(Collectors.toList());
    //@formatter:on
     webLinks = new Elements(elementList);
+    List<String> childLinks = new ArrayList<>();
     for (Element webPage : webLinks) {
       String absUrl = webPage.attr("abs:href");
       this.links.add(absUrl);
+      childLinks.add(absUrl);
     } 
+    parentChildUrlMap.put(url, childLinks);
     return pageNode;
   }
 
@@ -117,6 +128,14 @@ public class UrlTrackingService2 implements UrlTrackingServiceIF {
     
     if (!CollectionUtils.isEmpty(this.links)) {
       this.links.clear();
+    }
+    
+    if (!CollectionUtils.isEmpty(this.parentChildUrlMap)) {
+        this.parentChildUrlMap.clear();
+    }
+    
+    if (!CollectionUtils.isEmpty(this.pageNodeMap)) {
+        this.pageNodeMap.clear();
     }
   }
 
